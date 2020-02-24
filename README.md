@@ -1,2 +1,8 @@
 # my-flink-project
 flink learn
+
+
+
+关于IntelliJ的注意事项：要使应用程序在IntelliJ IDEA中运行，需要在范围编译中声明Flink依赖项，而不是提供。
+否则，IntelliJ不会将它们添加到类路径中，并且in-IDE执行将失败并带有NoClassDefFountError。
+为了避免必须将依赖范围声明为compile（不推荐使用，请参见上文），上面链接的Java和Scala项目模板使用了一个技巧：它们添加了一个配置文件，该应用程序在IntelliJ中运行时有选择地激活在不影响JAR文件打包的情况下，将依赖关系提升到范围编译。
