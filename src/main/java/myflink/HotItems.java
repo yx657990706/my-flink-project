@@ -17,6 +17,7 @@ import java.net.URL;
 
 public class HotItems {
     public static void main(String[] args) throws Exception {
+        Long start = System.currentTimeMillis();
         // 创建 execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // 为了打印到控制台的结果不乱序，我们配置全局的并发为1，这里改变并发对结果正确性没有影响
@@ -46,24 +47,26 @@ public class HotItems {
 
         //将点击行为数据过滤出来
         DataStream<UserBehavior> pvData = timedData
-                .filter(new FilterFunction<UserBehavior>() {
-                    @Override
-                    public boolean filter(UserBehavior userBehavior) throws Exception {
-                        // 过滤出只有点击的数据
-                        return userBehavior.behavior.equals("pv");
-                    }
+                .filter((FilterFunction<UserBehavior>) userBehavior -> {
+                    // 过滤出只有点击的数据
+                    return userBehavior.behavior.equals("pv");
                 });
-
+        //滑动窗口处理
         DataStream<ItemViewCount> windowedData = pvData
                 .keyBy("itemId")
                 .timeWindow(Time.minutes(60), Time.minutes(5))
                 .aggregate(new CountAgg(), new WindowResultFunction());
-
+         //窗口事件处理
         DataStream<String> topItems = windowedData
                 .keyBy("windowEnd")
                 .process(new TopNHotItems(3));  // 求点击量前3名的商品
-
+        //接收器处理（此处打印）
         topItems.print();
+        System.out.println("===>>001");
+        //开始执行
         env.execute("Hot Items Job");
+        System.out.println("===>>002");
+
+        System.out.println("===>>耗时：" + (System.currentTimeMillis() - start));
     }
 }
